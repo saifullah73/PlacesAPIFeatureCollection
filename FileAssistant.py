@@ -1,29 +1,28 @@
 import csv
+import pandas as pd
 
 
 class FileAssistant:
-    def __init__(self,outputFile,inputFile):
-        self.outputFile = outputFile
-        self.inputFile = inputFile
+
+    passedCircleOrigins = []
 
 
-    def initializeNewFileWithFeatureRow(self,features):
-        with open(self.outputFile) as output:
-            writer = csv.writer(output)
-            features.insert(0,'origin')
-            writer.writeRow(features)
-        output.close()
+    def __init__(self,fileName):
+        self.fileName = fileName
 
 
-    def writeBackToFile(self,nearbyLocations):
-         with open(self.outputFile, 'a') as output:
-            writer = csv.writer(output)
-            for items in nearbyLocations.items():
-                count = items[1][1]
-                while (count > 0):
-                    row = [items[0],items[1][0]]
-                    writer.writeRow(row)
-                    count -= 1
+    def appendFeatureColumns(self,features):
+        df = pd.read_csv(self.fileName, sep=',')
+        df.set_index("id", inplace=True)
+        for feature in features:
+             df[feature] = "None"
+        df.to_csv(self.fileName)
 
-
+    def insertValues(self,values,columnName):
+        df = pd.read_csv(self.fileName,sep = ',')
+        df.set_index("id", inplace= True)
+        for key in values:
+            key = int(key)
+            df.loc[key, columnName] = values.get(key)
+        df.to_csv(self.fileName)
 
