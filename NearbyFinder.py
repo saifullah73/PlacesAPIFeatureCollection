@@ -20,11 +20,21 @@ class NearbyFinder:
 
 
     def searchAllPointsInOuterRadius(self,key, type , location):
+        radius = self.outerRadius
+        iteration = 1
         URL = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
-        params = {'location':location , 'radius':self.outerRadius, 'type':type, 'key':key}
-        response = requests.get(url = URL, params = params)
-        mResults = response.json()
-        results = mResults.get('results')
+        while (iteration <= 3):
+            print("Iteration for api call = ", iteration, end = " ")
+            print("OuterRadius = ",radius)
+            params = {'location':location , 'radius':radius, 'type':type, 'key':key}
+            response = requests.get(url = URL, params = params)
+            mResults = response.json()
+            results = mResults.get('results')
+            if results is None:
+                iteration += 1
+                radius +=1
+            else:
+                break
         if (results is not None ) and  (len(results) > 0):
             for x in range (len(results)):
                 lat = results[x]['geometry']['location']['lat']
