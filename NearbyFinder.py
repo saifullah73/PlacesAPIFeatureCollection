@@ -5,6 +5,7 @@ import pprint
 import geopy.distance
 import APICounter
 import requests
+import time
 
 
 class NearbyFinder:
@@ -20,19 +21,21 @@ class NearbyFinder:
 
 
     def searchAllPointsInOuterRadius(self,key, type , location):
-        radius = self.outerRadius
+        radius = self.outerRadius + 1000
         iteration = 1
         URL = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json'
-        while (iteration <= 3):
+        while (iteration <= 5):
             print("Iteration for api call = ", iteration, end = " ")
             print("OuterRadius = ",radius)
             params = {'location':location , 'radius':radius, 'type':type, 'key':key}
+            time.sleep(APICounter.SLEEP_TIME)
             response = requests.get(url = URL, params = params)
+            APICounter.totalAPICalls += 1
             mResults = response.json()
             results = mResults.get('results')
-            if results is None:
+            if (results is None or len(results) == 0):
                 iteration += 1
-                radius +=1
+                radius +=1000
             else:
                 break
         if (results is not None ) and  (len(results) > 0):
@@ -53,19 +56,20 @@ class NearbyFinder:
 
     def doNearbySearchForOneType(self,type):
          ##for population, origin is also part of population
-        for loc in self.circle.population:
-            currentDistance = 1000
-            for nearbyPoint in self.locationsFound:
-                distance = self.findStraightLineDistance(loc[1],nearbyPoint)
-                if distance < currentDistance:
-                    currentDistance = distance
-            self.nearbyLocations[loc[0]] = currentDistance
-        if len(self.nearbyLocations) != 0:
-            self.writeNearbyBackToFile(type)
-        else:
-            self.nearbyLocations.clear()
-            self.locationsFound.clear()
-            print("No results to be written back")
+         if len(self.locationsFound) > 0:
+            for loc in self.circle.population:
+                currentDistance = 1000
+                for nearbyPoint in self.locationsFound:
+                    distance = self.findStraightLineDistance(loc[1],nearbyPoint)
+                    if distance < currentDistance:
+                        currentDistance = distance
+                self.nearbyLocations[loc[0]] = currentDistance
+            if len(self.nearbyLocations) != 0:
+                self.writeNearbyBackToFile(type)
+            else:
+                self.nearbyLocations.clear()
+                self.locationsFound.clear()
+                print("No results to be written back")
 
 
     def writeNearbyBackToFile(self,type):
@@ -76,15 +80,17 @@ class NearbyFinder:
 
     def start(self):
         for type in self.featureSet.features:
-            if APICounter.totalAPICalls <= 200:
+            print("Searching for type \"",type,"\"")
+            if APICounter.totalAPICalls <= APICounter.API_LIMIT:
                 self.searchAllPointsInOuterRadius(self.key,type,self.circle.origin)
-                APICounter.totalAPICalls +=1
                 print("total Api calls = ", APICounter.totalAPICalls)
-                print("Total Nearby Points for type " +str(type) + " = ", len(self.locationsFound))
+                print("Total Nearby Points for type " +str(type) + " = ", len(self.locationsFound), end = '\n\n')
                 self.doNearbySearchForOneType(type)
             else:
                 print("Total API Calls = ", APICounter.totalAPICalls)
                 print("limit exceeded")
+                APICounter.limitExceeded = True
+                break
 
 
 

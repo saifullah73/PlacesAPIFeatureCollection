@@ -6,7 +6,8 @@ import pandas as pd
 
 
 circleOrigins = []
-API_KEY = None ##write APi key
+API_KEY = 'AIzaSyC51xM_NLgMxlfWOFXxpA_Zpf01uu0MrzU' ##write APi key
+API_KEY2 = 'AIzaSyA6WXWT0CeO2UyFZheMw6BUhfJFNX3xiEo'
 
 
 def getCirlceOrigins():
@@ -20,14 +21,14 @@ def getCirlceOrigins():
 def start():
     count = 0
     fileAssistant = FileAssistant.FileAssistant('x.csv')
-    featureSet = FeatureSet.FeatureSet("hospital","restaurant")
+    featureSet = FeatureSet.FeatureSet("hospital","restaurant","bank","mosque","bus_station","park","department_store","school","supermarket","cemetery")
     fileAssistant.appendFeatureColumns(featureSet.features)
     getCirlceOrigins()
     print("Total Circles = ", len(circleOrigins))
     df = pd.read_csv("x.csv", sep=',')
     for origin in circleOrigins:
         count+=1
-        print("Circle no. " ,count)
+        print("========================Circle no. " ,count , "========================")
         df1 = df[(df.Origin == origin)]
         population = []
         for x in df1.iterrows():
@@ -36,6 +37,10 @@ def start():
         print("population = ",len(circle.population))
         nearbyFinder = NearbyFinder(circle,featureSet,API_KEY,fileAssistant)
         nearbyFinder.start()
+        if (APICounter.limitExceeded):
+            print("Ending Searcher")
+            break
+
 
 
 
